@@ -1,16 +1,22 @@
-# SPDX-License-Identifier: GPL-2.0
-ifeq ($(wildcard $(srctree)/arch/$(SRCARCH)/include/uapi/asm/a.out.h),)
-no-export-headers += linux/a.out.h
-endif
+# SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note
 
-ifeq ($(wildcard $(srctree)/arch/$(SRCARCH)/include/uapi/asm/kvm.h),)
-no-export-headers += linux/kvm.h
-endif
+# Legacy file used for kernel 4.19.x build system to install
+# UAPI headers.
 
-header-y += linux/qbt_handler.h
-
-ifeq ($(wildcard $(srctree)/arch/$(SRCARCH)/include/uapi/asm/kvm_para.h),)
-ifeq ($(wildcard $(objtree)/arch/$(SRCARCH)/include/generated/uapi/asm/kvm_para.h),)
-no-export-headers += linux/kvm_para.h
-endif
-endif
+header-y += camera/media/cam_cpas.h
+header-y += camera/media/cam_custom.h
+header-y += camera/media/cam_defs.h
+header-y += camera/media/cam_fd.h
+header-y += camera/media/cam_icp.h
+header-y += camera/media/cam_isp_ife.h
+header-y += camera/media/cam_isp_vfe.h
+header-y += camera/media/cam_isp.h
+header-y += camera/media/cam_jpeg.h
+header-y += camera/media/cam_lrme.h
+header-y += camera/media/cam_req_mgr.h
+header-y += camera/media/cam_sensor.h
+header-y += camera/media/cam_sync.h
+header-y += camera/media/cam_ope.h
+header-y += camera/media/cam_isp_tfe.h
+header-y += camera/media/cam_tfe.h
+header-y += camera/media/cam_isp_sfe.h

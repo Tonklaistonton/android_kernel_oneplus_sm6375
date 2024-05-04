@@ -1,190 +1,230 @@
-# SPDX-License-Identifier: GPL-2.0
-#
-# Makefile for the Linux kernel device drivers.
-#
-# 15 Sep 2000, Christoph Hellwig <hch@infradead.org>
-# Rewritten to use lists instead of if-statements.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
-obj-y				+= irqchip/
-obj-y				+= bus/
+cameratree := $(srctree)/techpack/camera/drivers
 
-obj-$(CONFIG_GENERIC_PHY)	+= phy/
+cam_include_dirs := $(shell dirname `find $(cameratree) -name '*.h'` | uniq)
+ccflags-y += $(addprefix -I,$(cam_include_dirs))
 
-# GPIO must come after pinctrl as gpios may need to mux pins etc
-obj-$(CONFIG_PINCTRL)		+= pinctrl/
-obj-$(CONFIG_GPIOLIB)		+= gpio/
-obj-y				+= pwm/
-
-obj-y				+= pci/
-
-obj-$(CONFIG_PARISC)		+= parisc/
-obj-$(CONFIG_RAPIDIO)		+= rapidio/
-obj-y				+= video/
-obj-y				+= idle/
-
-# IPMI must come before ACPI in order to provide IPMI opregion support
-obj-y				+= char/ipmi/
-
-obj-$(CONFIG_ACPI)		+= acpi/
-obj-$(CONFIG_SFI)		+= sfi/
-# PnP must come after ACPI since it will eventually need to check if acpi
-# was used and do nothing if so
-obj-$(CONFIG_PNP)		+= pnp/
-obj-y				+= amba/
-
-obj-y				+= clk/
-# Many drivers will want to use DMA so this has to be made available
-# really early.
-obj-$(CONFIG_DMADEVICES)	+= dma/
-
-# SOC specific infrastructure drivers.
-obj-y				+= soc/
-
-obj-$(CONFIG_VIRTIO)		+= virtio/
-obj-$(CONFIG_XEN)		+= xen/
-
-# regulators early, since some subsystems rely on them to initialize
-obj-$(CONFIG_REGULATOR)		+= regulator/
-
-# reset controllers early, since gpu drivers might rely on them to initialize
-obj-$(CONFIG_RESET_CONTROLLER)	+= reset/
-
-# tty/ comes before char/ so that the VT console is the boot-time
-# default.
-obj-y				+= tty/
-obj-y				+= char/
-
-# iommu/ comes before gpu as gpu are using iommu controllers
-obj-y				+= iommu/
-
-# gpu/ comes after char for AGP vs DRM startup and after iommu
-obj-y				+= gpu/
-
-obj-$(CONFIG_CONNECTOR)		+= connector/
-
-# i810fb and intelfb depend on char/agp/
-obj-$(CONFIG_FB_I810)           += video/fbdev/i810/
-obj-$(CONFIG_FB_INTEL)          += video/fbdev/intelfb/
-
-obj-$(CONFIG_PARPORT)		+= parport/
-obj-$(CONFIG_NVM)		+= lightnvm/
-obj-y				+= base/ block/ misc/ mfd/ nfc/
-obj-$(CONFIG_LIBNVDIMM)		+= nvdimm/
-obj-$(CONFIG_DAX)		+= dax/
-obj-$(CONFIG_DMA_SHARED_BUFFER) += dma-buf/
-obj-$(CONFIG_NUBUS)		+= nubus/
-obj-y				+= macintosh/
-obj-$(CONFIG_IDE)		+= ide/
-obj-y				+= scsi/
-obj-y				+= nvme/
-obj-$(CONFIG_ATA)		+= ata/
-obj-$(CONFIG_TARGET_CORE)	+= target/
-obj-$(CONFIG_MTD)		+= mtd/
-obj-$(CONFIG_SPI)		+= spi/
-obj-$(CONFIG_SPMI)		+= spmi/
-obj-$(CONFIG_HSI)		+= hsi/
-obj-$(CONFIG_SLIMBUS)		+= slimbus/
-obj-y				+= net/
-obj-$(CONFIG_ATM)		+= atm/
-obj-$(CONFIG_FUSION)		+= message/
-obj-y				+= firewire/
-obj-$(CONFIG_UIO)		+= uio/
-obj-$(CONFIG_VFIO)		+= vfio/
-obj-y				+= cdrom/
-obj-y				+= auxdisplay/
-obj-$(CONFIG_PCCARD)		+= pcmcia/
-obj-$(CONFIG_DIO)		+= dio/
-obj-$(CONFIG_SBUS)		+= sbus/
-obj-$(CONFIG_ZORRO)		+= zorro/
-obj-$(CONFIG_ATA_OVER_ETH)	+= block/aoe/
-obj-$(CONFIG_PARIDE) 		+= block/paride/
-obj-$(CONFIG_TC)		+= tc/
-obj-$(CONFIG_USB_PHY)		+= usb/
-obj-$(CONFIG_USB)		+= usb/
-obj-$(CONFIG_USB_SUPPORT)	+= usb/
-obj-$(CONFIG_PCI)		+= usb/
-obj-$(CONFIG_USB_GADGET)	+= usb/
-obj-$(CONFIG_OF)		+= usb/
-obj-$(CONFIG_SERIO)		+= input/serio/
-obj-$(CONFIG_GAMEPORT)		+= input/gameport/
-obj-$(CONFIG_INPUT)		+= input/
-obj-$(CONFIG_RTC_LIB)		+= rtc/
-obj-y				+= i2c/ i3c/ media/
-obj-$(CONFIG_PPS)		+= pps/
-obj-y				+= ptp/
-obj-$(CONFIG_W1)		+= w1/
-obj-y				+= power/
-obj-$(CONFIG_HWMON)		+= hwmon/
-obj-$(CONFIG_THERMAL)		+= thermal/
-obj-$(CONFIG_WATCHDOG)		+= watchdog/
-obj-$(CONFIG_MD)		+= md/
-obj-$(CONFIG_BT)		+= bluetooth/
-obj-$(CONFIG_ACCESSIBILITY)	+= accessibility/
-obj-$(CONFIG_ISDN)		+= isdn/
-obj-$(CONFIG_EDAC)		+= edac/
-obj-$(CONFIG_EISA)		+= eisa/
-obj-$(CONFIG_PM_OPP)		+= opp/
-obj-$(CONFIG_CPU_FREQ)		+= cpufreq/
-obj-$(CONFIG_CPU_IDLE)		+= cpuidle/
-obj-y				+= mmc/
-obj-$(CONFIG_MEMSTICK)		+= memstick/
-obj-$(CONFIG_NEW_LEDS)		+= leds/
-obj-$(CONFIG_INFINIBAND)	+= infiniband/
-obj-y				+= firmware/
-obj-$(CONFIG_CRYPTO)		+= crypto/
-obj-$(CONFIG_SUPERH)		+= sh/
-ifndef CONFIG_ARCH_USES_GETTIMEOFFSET
-obj-y				+= clocksource/
+ifneq (,$(filter $(CONFIG_MSM_GLOBAL_SYNX), y m))
+ccflags-y += -I$(srctree)/drivers/media/platform/msm/synx
 endif
-obj-$(CONFIG_DCA)		+= dca/
-obj-$(CONFIG_HID)		+= hid/
-obj-$(CONFIG_PPC_PS3)		+= ps3/
-obj-$(CONFIG_OF)		+= of/
-obj-$(CONFIG_SSB)		+= ssb/
-obj-$(CONFIG_BCMA)		+= bcma/
-obj-$(CONFIG_VHOST_RING)	+= vhost/
-obj-$(CONFIG_VHOST)		+= vhost/
-obj-$(CONFIG_VLYNQ)		+= vlynq/
-obj-$(CONFIG_GREYBUS)		+= greybus/
-obj-$(CONFIG_STAGING)		+= staging/
-obj-y				+= platform/
 
-obj-$(CONFIG_MAILBOX)		+= mailbox/
-obj-$(CONFIG_HWSPINLOCK)	+= hwspinlock/
-obj-$(CONFIG_REMOTEPROC)	+= remoteproc/
-obj-$(CONFIG_RPMSG)		+= rpmsg/
-obj-$(CONFIG_SOUNDWIRE)		+= soundwire/
+ccflags-y += -I$(srctree)/techpack/camera/include/uapi/camera
+ccflags-y += -I$(srctree)
 
-# Virtualization drivers
-obj-$(CONFIG_VIRT_DRIVERS)	+= virt/
-obj-$(CONFIG_HYPERV)		+= hv/
+camera-y := \
+	cam_req_mgr/cam_req_mgr_core.o \
+	cam_req_mgr/cam_req_mgr_dev.o \
+	cam_req_mgr/cam_req_mgr_util.o \
+	cam_req_mgr/cam_mem_mgr.o \
+	cam_req_mgr/cam_req_mgr_workq.o \
+	cam_req_mgr/cam_req_mgr_timer.o \
+	cam_req_mgr/cam_req_mgr_debug.o \
+	cam_utils/cam_soc_util.o \
+	cam_utils/cam_io_util.o \
+	cam_utils/cam_packet_util.o \
+	cam_utils/cam_debug_util.o \
+	cam_utils/cam_trace.o \
+	cam_utils/cam_common_util.o \
+	cam_utils/cam_compat.o \
+	cam_core/cam_context.o \
+	cam_core/cam_context_utils.o \
+	cam_core/cam_node.o \
+	cam_core/cam_subdev.o \
+	cam_smmu/cam_smmu_api.o \
+	cam_sync/cam_sync.o \
+	cam_sync/cam_sync_util.o \
+	cam_cpas/cpas_top/cam_cpastop_hw.o \
+	cam_cpas/camss_top/cam_camsstop_hw.o \
+	cam_cpas/cam_cpas_soc.o \
+	cam_cpas/cam_cpas_intf.o \
+	cam_cpas/cam_cpas_hw.o \
+	cam_cdm/cam_cdm_soc.o \
+	cam_cdm/cam_cdm_util.o \
+	cam_cdm/cam_cdm_intf.o \
+	cam_cdm/cam_cdm_core_common.o \
+	cam_cdm/cam_cdm_virtual_core.o \
+	cam_cdm/cam_cdm_hw_core.o
 
-obj-$(CONFIG_PM_DEVFREQ)	+= devfreq/
-obj-$(CONFIG_EXTCON)		+= extcon/
-obj-$(CONFIG_MEMORY)		+= memory/
-obj-$(CONFIG_IIO)		+= iio/
-obj-$(CONFIG_VME_BUS)		+= vme/
-obj-$(CONFIG_IPACK_BUS)		+= ipack/
-obj-$(CONFIG_NTB)		+= ntb/
-obj-$(CONFIG_POWERCAP)		+= powercap/
-obj-$(CONFIG_MCB)		+= mcb/
-obj-$(CONFIG_PERF_EVENTS)	+= perf/
-obj-$(CONFIG_RAS)		+= ras/
-obj-$(CONFIG_THUNDERBOLT)	+= thunderbolt/
-obj-$(CONFIG_CORESIGHT)		+= hwtracing/coresight/
-obj-y				+= hwtracing/intel_th/
-obj-$(CONFIG_STM)		+= hwtracing/stm/
-obj-$(CONFIG_ANDROID)		+= android/
-obj-$(CONFIG_NVMEM)		+= nvmem/
-obj-$(CONFIG_FPGA)		+= fpga/
-obj-$(CONFIG_FSI)		+= fsi/
-obj-$(CONFIG_TEE)		+= tee/
-obj-$(CONFIG_MULTIPLEXER)	+= mux/
-obj-$(CONFIG_UNISYS_VISORBUS)	+= visorbus/
-obj-$(CONFIG_SIOX)		+= siox/
-obj-$(CONFIG_GNSS)		+= gnss/
-obj-$(CONFIG_INTERCONNECT)	+= interconnect/
-obj-$(CONFIG_COUNTER)		+= counter/
+ifneq (,$(filter $(CONFIG_QCOM_CX_IPEAK),y m))
+camera-y += cam_utils/cam_cx_ipeak.o
+endif
 
-obj-$(CONFIG_KSU) += kernelsu/
+ifneq (,$(filter $(CONFIG_QCOM_BUS_SCALING),y m))
+camera-y += cam_utils/cam_soc_bus.o
+endif
+
+ifneq (,$(filter $(CONFIG_INTERCONNECT_QCOM),y m))
+camera-y += cam_utils/cam_soc_icc.o
+endif
+
+camera-$(CONFIG_SPECTRA_ISP) += \
+	cam_isp/isp_hw_mgr/hw_utils/cam_tasklet_util.o \
+	cam_isp/isp_hw_mgr/hw_utils/cam_isp_packet_parser.o \
+	cam_isp/isp_hw_mgr/hw_utils/irq_controller/cam_irq_controller.o \
+	cam_isp/isp_hw_mgr/isp_hw/ife_csid_hw/cam_ife_csid_dev.o \
+	cam_isp/isp_hw_mgr/isp_hw/ife_csid_hw/cam_ife_csid_soc.o \
+	cam_isp/isp_hw_mgr/isp_hw/ife_csid_hw/cam_ife_csid_core.o \
+	cam_isp/isp_hw_mgr/isp_hw/ife_csid_hw/cam_ife_csid17x.o \
+	cam_isp/isp_hw_mgr/isp_hw/ife_csid_hw/cam_ife_csid_lite17x.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/cam_vfe_soc.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/cam_vfe_dev.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/cam_vfe_core.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_bus/cam_vfe_bus.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_bus/cam_vfe_bus_ver2.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_bus/cam_vfe_bus_rd_ver1.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_bus/cam_vfe_bus_ver3.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_top/cam_vfe_camif_lite_ver2.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_top/cam_vfe_top.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_top/cam_vfe_top_common.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_top/cam_vfe_top_ver3.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_top/cam_vfe_top_ver2.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_top/cam_vfe_camif_ver2.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_top/cam_vfe_camif_ver3.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_top/cam_vfe_rdi.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_top/cam_vfe_fe_ver1.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe_top/cam_vfe_camif_lite_ver3.o \
+	cam_isp/isp_hw_mgr/isp_hw/vfe_hw/vfe17x/cam_vfe.o \
+	cam_isp/isp_hw_mgr/isp_hw/sfe_hw/cam_sfe_soc.o \
+	cam_isp/isp_hw_mgr/isp_hw/sfe_hw/cam_sfe_dev.o \
+	cam_isp/isp_hw_mgr/isp_hw/sfe_hw/cam_sfe_core.o \
+	cam_isp/isp_hw_mgr/isp_hw/sfe_hw/sfe_top/cam_sfe_top.o \
+	cam_isp/isp_hw_mgr/isp_hw/sfe_hw/sfe_bus/cam_sfe_bus.o \
+	cam_isp/isp_hw_mgr/isp_hw/sfe_hw/sfe_bus/cam_sfe_bus_rd.o \
+	cam_isp/isp_hw_mgr/isp_hw/sfe_hw/sfe_bus/cam_sfe_bus_wr.o \
+	cam_isp/isp_hw_mgr/isp_hw/top_tpg/cam_top_tpg_dev.o \
+	cam_isp/isp_hw_mgr/isp_hw/top_tpg/cam_top_tpg_soc.o \
+	cam_isp/isp_hw_mgr/isp_hw/top_tpg/cam_top_tpg_core.o \
+	cam_isp/isp_hw_mgr/isp_hw/top_tpg/cam_top_tpg_ver1.o \
+	cam_isp/isp_hw_mgr/isp_hw/top_tpg/cam_top_tpg_ver2.o \
+	cam_isp/isp_hw_mgr/isp_hw/top_tpg/cam_top_tpg_ver3.o \
+	cam_isp/isp_hw_mgr/isp_hw/top_tpg/cam_top_tpg.o \
+	cam_isp/isp_hw_mgr/cam_isp_hw_mgr.o \
+	cam_isp/isp_hw_mgr/cam_ife_hw_mgr.o \
+	cam_isp/cam_isp_dev.o \
+	cam_isp/cam_isp_context.o
+
+camera-$(CONFIG_SPECTRA_ICP) += \
+	cam_icp/icp_hw/icp_hw_mgr/cam_icp_hw_mgr.o \
+	cam_icp/icp_hw/ipe_hw/ipe_dev.o \
+	cam_icp/icp_hw/ipe_hw/ipe_core.o \
+	cam_icp/icp_hw/ipe_hw/ipe_soc.o \
+	cam_icp/icp_hw/a5_hw/a5_dev.o \
+	cam_icp/icp_hw/a5_hw/a5_core.o \
+	cam_icp/icp_hw/a5_hw/a5_soc.o \
+	cam_icp/icp_hw/bps_hw/bps_dev.o \
+	cam_icp/icp_hw/bps_hw/bps_core.o \
+	cam_icp/icp_hw/bps_hw/bps_soc.o \
+	cam_icp/cam_icp_subdev.o \
+	cam_icp/cam_icp_context.o \
+	cam_icp/hfi.o
+
+camera-$(CONFIG_SPECTRA_JPEG) += \
+	cam_jpeg/jpeg_hw/jpeg_enc_hw/jpeg_enc_dev.o \
+	cam_jpeg/jpeg_hw/jpeg_enc_hw/jpeg_enc_core.o \
+	cam_jpeg/jpeg_hw/jpeg_enc_hw/jpeg_enc_soc.o \
+	cam_jpeg/jpeg_hw/jpeg_dma_hw/jpeg_dma_dev.o \
+	cam_jpeg/jpeg_hw/jpeg_dma_hw/jpeg_dma_core.o \
+	cam_jpeg/jpeg_hw/jpeg_dma_hw/jpeg_dma_soc.o \
+	cam_jpeg/jpeg_hw/cam_jpeg_hw_mgr.o \
+	cam_jpeg/cam_jpeg_dev.o \
+	cam_jpeg/cam_jpeg_context.o
+
+camera-$(CONFIG_SPECTRA_FD) += \
+	cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_dev.o \
+	cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_core.o \
+	cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_soc.o \
+	cam_fd/fd_hw_mgr/cam_fd_hw_mgr.o \
+	cam_fd/cam_fd_dev.o \
+	cam_fd/cam_fd_context.o
+
+camera-$(CONFIG_SPECTRA_LRME) += \
+	cam_lrme/lrme_hw_mgr/lrme_hw/cam_lrme_hw_dev.o \
+	cam_lrme/lrme_hw_mgr/lrme_hw/cam_lrme_hw_core.o \
+	cam_lrme/lrme_hw_mgr/lrme_hw/cam_lrme_hw_soc.o \
+	cam_lrme/lrme_hw_mgr/cam_lrme_hw_mgr.o \
+	cam_lrme/cam_lrme_dev.o \
+	cam_lrme/cam_lrme_context.o
+
+camera-$(CONFIG_SPECTRA_SENSOR) += \
+	cam_sensor_module/cam_actuator/cam_actuator_dev.o \
+	cam_sensor_module/cam_actuator/cam_actuator_core.o \
+	cam_sensor_module/cam_actuator/cam_actuator_soc.o \
+	cam_sensor_module/cam_cci/cam_cci_dev.o \
+	cam_sensor_module/cam_cci/cam_cci_core.o \
+	cam_sensor_module/cam_cci/cam_cci_soc.o \
+	cam_sensor_module/cam_csiphy/cam_csiphy_soc.o \
+	cam_sensor_module/cam_csiphy/cam_csiphy_dev.o \
+	cam_sensor_module/cam_csiphy/cam_csiphy_core.o \
+	cam_sensor_module/cam_eeprom/cam_eeprom_dev.o \
+	cam_sensor_module/cam_eeprom/cam_eeprom_core.o  \
+	cam_sensor_module/cam_eeprom/cam_eeprom_soc.o \
+	cam_sensor_module/cam_ois/cam_ois_dev.o \
+	cam_sensor_module/cam_ois/cam_ois_core.o \
+	cam_sensor_module/cam_ois/cam_ois_soc.o \
+	cam_sensor_module/cam_sensor/cam_sensor_dev.o \
+	cam_sensor_module/cam_sensor/cam_sensor_core.o \
+	cam_sensor_module/cam_sensor/cam_sensor_soc.o \
+	cam_sensor_module/cam_sensor_io/cam_sensor_io.o \
+	cam_sensor_module/cam_sensor_io/cam_sensor_cci_i2c.o \
+	cam_sensor_module/cam_sensor_io/cam_sensor_qup_i2c.o \
+	cam_sensor_module/cam_sensor_io/cam_sensor_spi.o \
+	cam_sensor_module/cam_sensor_utils/cam_sensor_util.o \
+	cam_sensor_module/cam_res_mgr/cam_res_mgr.o
+
+camera-$(CONFIG_LEDS_QPNP_FLASH_V2) += \
+	cam_sensor_module/cam_flash/cam_flash_dev.o \
+	cam_sensor_module/cam_flash/cam_flash_core.o \
+	cam_sensor_module/cam_flash/cam_flash_soc.o
+
+ifneq (,$(filter $(CONFIG_LEDS_QTI_FLASH),y m))
+camera-y += \
+	cam_sensor_module/cam_flash/cam_flash_dev.o \
+	cam_sensor_module/cam_flash/cam_flash_core.o \
+	cam_sensor_module/cam_flash/cam_flash_soc.o
+endif
+
+camera-$(CONFIG_SPECTRA_CUSTOM) += \
+	cam_cust/cam_custom_hw_mgr/cam_custom_hw1/cam_custom_sub_mod_soc.o \
+	cam_cust/cam_custom_hw_mgr/cam_custom_hw1/cam_custom_sub_mod_dev.o \
+	cam_cust/cam_custom_hw_mgr/cam_custom_hw1/cam_custom_sub_mod_core.o \
+	cam_cust/cam_custom_hw_mgr/cam_custom_csid/cam_custom_csid_dev.o \
+	cam_cust/cam_custom_hw_mgr/cam_custom_hw_mgr.o \
+	cam_cust/cam_custom_dev.o \
+	cam_cust/cam_custom_context.o
+
+camera-$(CONFIG_SPECTRA_OPE) += \
+	cam_ope/cam_ope_subdev.o \
+	cam_ope/cam_ope_context.o \
+	cam_ope/ope_hw_mgr/cam_ope_hw_mgr.o \
+	cam_ope/ope_hw_mgr/ope_hw/ope_dev.o \
+	cam_ope/ope_hw_mgr/ope_hw/ope_soc.o \
+	cam_ope/ope_hw_mgr/ope_hw/ope_core.o \
+	cam_ope/ope_hw_mgr/ope_hw/top/ope_top.o \
+	cam_ope/ope_hw_mgr/ope_hw/bus_rd/ope_bus_rd.o\
+	cam_ope/ope_hw_mgr/ope_hw/bus_wr/ope_bus_wr.o
+
+camera-$(CONFIG_SPECTRA_TFE) += \
+	cam_isp/isp_hw_mgr/isp_hw/ppi_hw/cam_csid_ppi_core.o \
+	cam_isp/isp_hw_mgr/isp_hw/ppi_hw/cam_csid_ppi_dev.o \
+	cam_isp/isp_hw_mgr/isp_hw/ppi_hw/cam_csid_ppi100.o \
+	cam_isp/isp_hw_mgr/isp_hw/tfe_hw/cam_tfe_soc.o \
+	cam_isp/isp_hw_mgr/isp_hw/tfe_hw/cam_tfe_dev.o \
+	cam_isp/isp_hw_mgr/isp_hw/tfe_hw/cam_tfe_core.o \
+	cam_isp/isp_hw_mgr/isp_hw/tfe_hw/cam_tfe_bus.o \
+	cam_isp/isp_hw_mgr/isp_hw/tfe_hw/cam_tfe.o \
+	cam_isp/isp_hw_mgr/isp_hw/tfe_csid_hw/cam_tfe_csid_dev.o \
+	cam_isp/isp_hw_mgr/isp_hw/tfe_csid_hw/cam_tfe_csid_soc.o \
+	cam_isp/isp_hw_mgr/isp_hw/tfe_csid_hw/cam_tfe_csid_core.o \
+	cam_isp/isp_hw_mgr/isp_hw/tfe_csid_hw/cam_tfe_csid530.o \
+	cam_isp/isp_hw_mgr/cam_tfe_hw_mgr.o
+
+
+camera-y += camera_main.o
+
+obj-$(CONFIG_SPECTRA_CAMERA) += camera.o
+
+ifeq ($(CONFIG_SPECTRA_CAMERA),m)
+$(info "SPECTRA CAMERA IS BUILT AS DLKM")
+BOARD_VENDOR_KERNEL_MODULES +=  $(KERNEL_MODULES_OUT)/camera.ko
+endif
