@@ -1,73 +1,92 @@
-# SPDX-License-Identifier: GPL-2.0-only
-
 # auto-detect subdirs
+ifneq ($(CONFIG_ARCH_QTI_VM), y)
+ifeq ($(CONFIG_QTI_QUIN_GVM), y)
+include $(srctree)/techpack/audio/config/gvmauto.conf
+endif
+ifeq ($(CONFIG_ARCH_SDXPOORWILLS), y)
+include $(srctree)/techpack/audio/config/sdxpoorwillsauto.conf
+export
+endif
+ifeq ($(CONFIG_ARCH_SM8150), y)
+include $(srctree)/techpack/audio/config/sm8150auto.conf
+export
+endif
+ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
+include $(srctree)/techpack/audio/config/sm8150auto.conf
+export
+endif
 ifeq ($(CONFIG_ARCH_KONA), y)
-     ifeq ($(CONFIG_QGKI), y)
-		include $(srctree)/techpack/display/config/konadisp.conf
-LINUXINCLUDE    += -include $(srctree)/techpack/display/config/konadispconf.h
-     else
-		include $(srctree)/techpack/display/config/gki_konadisp.conf
-LINUXINCLUDE    += -include $(srctree)/techpack/display/config/gki_konadispconf.h
-     endif
+include $(srctree)/techpack/audio/config/konaauto.conf
 endif
-
 ifeq ($(CONFIG_ARCH_LAHAINA), y)
-     ifeq ($(CONFIG_QGKI), y)
-		include $(srctree)/techpack/display/config/lahainadisp.conf
-LINUXINCLUDE    += -include $(srctree)/techpack/display/config/lahainadispconf.h
-     else
-		include $(srctree)/techpack/display/config/gki_lahainadisp.conf
-LINUXINCLUDE    += -include $(srctree)/techpack/display/config/gki_lahainadispconf.h
-     endif
+include $(srctree)/techpack/audio/config/lahainaauto.conf
 endif
-
 ifeq ($(CONFIG_ARCH_HOLI), y)
-     ifeq ($(CONFIG_QGKI), y)
-		include $(srctree)/techpack/display/config/holidisp.conf
-LINUXINCLUDE    += -include $(srctree)/techpack/display/config/holidispconf.h
-     else
-		include $(srctree)/techpack/display/config/gki_holidisp.conf
-LINUXINCLUDE    += -include $(srctree)/techpack/display/config/gki_holidispconf.h
-     endif
+include $(srctree)/techpack/audio/config/holiauto.conf
 endif
+ifeq ($(CONFIG_ARCH_SA8155), y)
+include $(srctree)/techpack/audio/config/sa8155auto.conf
+endif
+ifeq ($(CONFIG_ARCH_SA6155), y)
+include $(srctree)/techpack/audio/config/sa6155auto.conf
+endif
+ifeq ($(CONFIG_ARCH_SM6150), y)
+include $(srctree)/techpack/audio/config/sm6150auto.conf
+endif
+endif
+# Use USERINCLUDE when you must reference the UAPI directories only.
+USERINCLUDE     += \
+                -I$(srctree)/techpack/audio/include/uapi/audio
 
+# Use LINUXINCLUDE when you must reference the include/ directory.
+# Needed to be compatible with the O= option
 LINUXINCLUDE    += \
-		   -I$(srctree)/techpack/display/include/uapi/display \
-		   -I$(srctree)/techpack/display/include
-USERINCLUDE     += -I$(srctree)/techpack/display/include/uapi/display
+                -I$(srctree)/techpack/audio/include/uapi \
+                -I$(srctree)/techpack/audio/include/uapi/audio \
+                -I$(srctree)/techpack/audio/include/asoc \
+                -I$(srctree)/techpack/audio/include
 
-ifeq ($(CONFIG_ARCH_LITO), y)
-include $(srctree)/techpack/display/config/saipdisp.conf
+ifeq ($(CONFIG_QTI_QUIN_GVM), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/gvmautoconf.h
 endif
-
-ifeq ($(CONFIG_ARCH_LITO), y)
-LINUXINCLUDE    += -include $(srctree)/techpack/display/config/saipdispconf.h
+ifeq ($(CONFIG_ARCH_SDXPOORWILLS), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/sdxpoorwillsautoconf.h
 endif
-
-ifeq ($(CONFIG_ARCH_BENGAL), y)
-include $(srctree)/techpack/display/config/bengaldisp.conf
+ifeq ($(CONFIG_ARCH_SM8150), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/sm8150autoconf.h
 endif
-
-ifeq ($(CONFIG_ARCH_BENGAL), y)
-LINUXINCLUDE    += -include $(srctree)/techpack/display/config/bengaldispconf.h
+ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/sm8150autoconf.h
 endif
-
-ifeq ($(CONFIG_ARCH_MONACO), y)
-include $(srctree)/techpack/display/config/monacodisp.conf
+ifeq ($(CONFIG_ARCH_KONA), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/konaautoconf.h
 endif
-
-ifeq ($(CONFIG_ARCH_MONACO), y)
-LINUXINCLUDE    += -include $(srctree)/techpack/display/config/monacodispconf.h
+ifeq ($(CONFIG_ARCH_LAHAINA), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/lahainaautoconf.h
 endif
-
-obj-$(CONFIG_DRM_MSM) += msm/
-
-ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
-include $(srctree)/techpack/display/config/sdxlemurdisp.conf
+ifeq ($(CONFIG_ARCH_HOLI), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/holiautoconf.h
 endif
-
-ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
-LINUXINCLUDE    += -include $(srctree)/techpack/display/config/sdxlemurdispconf.h
+ifeq ($(CONFIG_ARCH_SA8155), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/sa8155autoconf.h
 endif
-
-obj-$(CONFIG_DRM_QPIC_DISPLAY) += tinydrm/
+ifeq ($(CONFIG_ARCH_SA6155), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/sa6155autoconf.h
+endif
+ifeq ($(CONFIG_ARCH_SM6150), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/sm6150autoconf.h
+endif
+obj-y += soc/
+obj-y += dsp/
+obj-y += ipc/
+obj-y += asoc/
