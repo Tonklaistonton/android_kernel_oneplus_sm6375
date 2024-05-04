@@ -1,45 +1,40 @@
-cc_binary_host {
-    name: "unifdef",
-    srcs: ["scripts/unifdef.c"],
-    sanitize: {
-        never: true,
-    },
-}
+headers_src = [
+    "include/uapi/*/**/*.h",
+]
 
+display_headers_out = [
+    "display/drm/msm_drm_pp.h",
+    "display/drm/sde_drm.h",
+    "display/hdcp/msm_hdmi_hdcp_mgr.h",
+    "display/media/mmm_color_fmt.h",
+    "display/media/msm_sde_rotator.h",
+]
+
+display_kernel_headers_verbose = "--verbose "
 genrule {
-    name: "gen-headers_install.sh",
-    srcs: ["scripts/headers_install.sh"],
-    out: ["headers_install.sh"],
-    // (Ie3b8c36b7d60bd950c28bac566e04f43de78cf98,b/178500203)
-    cmd: "sed 's+scripts/unifdef+$$LOC_UNIFDEF+g' $(in) > $(out)",
+    name: "qti_generate_display_kernel_headers",
+    tools: [
+        "headers_install.sh",
+        "unifdef"
+    ],
+    tool_files: [
+        "display_kernel_headers.py",
+    ],
+    srcs: headers_src,
+    cmd: "python3 $(location display_kernel_headers.py) " +
+          display_kernel_headers_verbose +
+         "--header_arch arm64 " +
+         "--gen_dir $(genDir) " +
+         "--display_include_uapi $(locations include/uapi/*/**/*.h) " +
+         "--unifdef $(location unifdef) " +
+         "--headers_install $(location headers_install.sh)",
+    out: display_headers_out,
 }
-
-cc_prebuilt_binary {
-    name: "headers_install.sh",
-    device_supported: false,
-    host_supported: true,
-    srcs: [":gen-headers_install.sh"],
-}
-
-// Use the following for verbose output from kernel_headers.py.
-// kernel_headers_verbose = "--verbose "
-// Use the following for minimal output from kernel_headers.py.
-kernel_headers_verbose = ""
-
-build = ["gen_headers_arm.bp", "gen_headers_arm64.bp"]
 
 cc_library_headers {
-    name: "qti_kernel_headers",
-    arch: {
-        arm: {
-            generated_headers: ["qti_generate_kernel_headers_arm"],
-            export_generated_headers: ["qti_generate_kernel_headers_arm"],
-        },
-        arm64: {
-            generated_headers: ["qti_generate_kernel_headers_arm64"],
-            export_generated_headers: ["qti_generate_kernel_headers_arm64"],
-        },
-    },
+    name: "qti_display_kernel_headers",
+    generated_headers: ["qti_generate_display_kernel_headers"],
+    export_generated_headers: ["qti_generate_display_kernel_headers"],
     vendor: true,
-    recovery_available: true,
+    recovery_available: true
 }
