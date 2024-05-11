@@ -27,6 +27,13 @@
 #include <linux/topology.h>
 #include <linux/scmi_protocol.h>
 
+static int touchboost = 1;
+
+/*
+ * Sched will provide the data for every 20ms window,
+ * will collect the data for 15 windows(300ms) and then update
+ * sysfs nodes with aggregated data
+ */
 #define POLL_INT 25
 #define NODE_NAME_MAX_CHARS 16
 
@@ -172,6 +179,24 @@ cleanup:
 }
 
 /*******************************sysfs start************************************/
+static int set_touchboost(const char *buf, const struct kernel_param *kp)
+{
+	int val;
+	if (sscanf(buf, "%d\n", &val) != 1)
+		return -EINVAL;
+	touchboost = val;
+	return 0;
+}
+
+static int get_touchboost(char *buf, const struct kernel_param *kp)
+{
+	return snprintf(buf, PAGE_SIZE, "%d", touchboost);
+}
+static const struct kernel_param_ops param_ops_touchboost = {
+	.set = set_touchboost,
+	.get = get_touchboost,
+};
+device_param_cb(touchboost, &param_ops_touchboost, NULL, 0644);
 static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 {
 	int i, j, ntokens = 0;
@@ -191,7 +216,10 @@ static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 		}
 		ready_for_freq_updates = true;
 	}
-
+	cpumask_var_t limit_mask;
+	const char *reset = "0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0";
+	if (touchboost == 0)
+		cp = reset;
 	while ((cp = strpbrk(cp + 1, " :")))
 		ntokens++;
 
@@ -199,8 +227,13 @@ static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 	if (!(ntokens % 2))
 		return -EINVAL;
 
-	cp = buf;
 	cpumask_clear(limit_mask_min);
+		if (touchboost == 0)
+		cp = reset;
+	else
+		cp = buf;
+
+	cpumask_clear(limit_mask)
 	for (i = 0; i < ntokens; i += 2) {
 		if (sscanf(cp, "%u:%u", &cpu, &val) != 2)
 			return -EINVAL;
@@ -284,7 +317,11 @@ static int set_cpu_max_freq(const char *buf, const struct kernel_param *kp)
 		}
 		ready_for_freq_updates = true;
 	}
+	cpumask_var_t limit_mask;
+	const char *reset = "0:4294967295 1:4294967295 2:4294967295 3:4294967295 4:4294967295 5:4294967295 6:4294967295 7:4294967295";
 
+    if (touchboost == 0)
+		cp = reset;
 	while ((cp = strpbrk(cp + 1, " :")))
 		ntokens++;
 
@@ -294,6 +331,13 @@ static int set_cpu_max_freq(const char *buf, const struct kernel_param *kp)
 
 	cp = buf;
 	cpumask_clear(limit_mask_max);
+	if (touchboost == 0)
+		cp = reset;
+	else
+		cp = buf;
+
+	cpumask_clear(limit_mask);
+for (i = 0; i < ntokens; i += 2) {
 	for (i = 0; i < ntokens; i += 2) {
 		if (sscanf(cp, "%u:%u", &cpu, &val) != 2)
 			return -EINVAL;
@@ -1007,7 +1051,6 @@ static int init_splh_notif(const char *buf)
 		ntokens++;
 
 	/* format of cmd nfps, n_ipc_freq_pair, <fps0, <ipc0, freq0>,...>,... */
-	cp = buf;
 	if (sscanf(cp, INIT ":%hu", &nfps)) {
 		if ((nfps != ntokens-1) || (nfps == 0) || (nfps > SPLH_FPS_MAX_CNT))
 			return -EINVAL;
