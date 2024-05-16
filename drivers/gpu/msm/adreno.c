@@ -32,6 +32,8 @@
 /* Include the master list of GPU cores that are supported */
 #include "adreno-gpulist.h"
 
+unsigned int is_gpu_overclocked = 1;
+
 static void adreno_pwr_on_work(struct work_struct *work);
 static int adreno_soft_reset(struct kgsl_device *device);
 static unsigned int counter_delta(struct kgsl_device *device,
